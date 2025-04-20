@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
-
+import sup from "../src/assets/image/proxy-image (1).jpg";
 export default function CulturalDayForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -197,7 +197,7 @@ export default function CulturalDayForm() {
       style={{ flexShrink: 0 }}
     >
       <img 
-        src="../src/assets/image/proxy-image (1).jpg" 
+        src={sup}
         alt="SUPEMIR Logo" 
         style={{ 
           height: 'clamp(40px, 5vw, 50px)',
