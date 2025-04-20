@@ -16,9 +16,10 @@ import {
   CheckIcon,
   XIcon,
 } from "lucide-react";
-import './App.css';
-import 'react-toastify/dist/ReactToastify.css';
+import "./App.css";
+import "react-toastify/dist/ReactToastify.css";
 import sup from "../src/assets/image/proxy-image (1).jpg";
+
 export default function CulturalDayForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,10 +31,10 @@ export default function CulturalDayForm() {
     willAttend: "",
     willParticipate: "",
     selected_activities: [],
-    additionalInfo: ""
+    additionalInfo: "",
   });
 
-  // Configuration des toasts
+  // Configuration des toasts avec animation
   const toastConfig = {
     position: "top-center",
     autoClose: 5000,
@@ -42,16 +43,27 @@ export default function CulturalDayForm() {
     pauseOnHover: true,
     draggable: true,
     progress: undefined,
+    transition: "zoom", // Ajout d'une animation zoom
+    theme: "colored",   // Thème coloré pour plus de visibilité
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    if (value) {
+      toast.info(`Champ ${name} mis à jour`, {
+        ...toastConfig,
+        icon: <CheckIcon size={16} />,
+      });
+    }
   };
 
   const handleRadioChange = (name, value) => {
     setFormData({ ...formData, [name]: value });
-    toast.info(`Option ${name} sélectionnée: ${value}`, toastConfig);
+    toast.success(`Option sélectionnée : ${value}`, {
+      ...toastConfig,
+      icon: <CheckIcon size={16} />,
+    });
   };
 
   const handleCheckboxChange = (activity) => {
@@ -59,15 +71,13 @@ export default function CulturalDayForm() {
       const updatedActivities = prev.selected_activities.includes(activity)
         ? prev.selected_activities.filter((a) => a !== activity)
         : [...prev.selected_activities, activity];
-      
       toast.info(
-        `Activité ${activity} ${updatedActivities.includes(activity) ? 'sélectionnée' : 'désélectionnée'}`,
+        `Activité ${activity} ${updatedActivities.includes(activity) ? 'ajoutée' : 'retirée'}`,
         {
           ...toastConfig,
-          icon: updatedActivities.includes(activity) ? <CheckIcon size={16} /> : <XIcon size={16} />
+          icon: updatedActivities.includes(activity) ? <CheckIcon size={16} /> : <XIcon size={16} />,
         }
       );
-      
       return { ...prev, selected_activities: updatedActivities };
     });
   };
@@ -76,58 +86,62 @@ export default function CulturalDayForm() {
     if (step === 1 && (!formData.name || !formData.email)) {
       toast.warning("Informations requises", {
         ...toastConfig,
-        description: "Veuillez remplir votre nom et votre email pour continuer"
+        description: "Veuillez remplir votre nom et votre email pour continuer",
+        icon: <XIcon size={16} />,
       });
       return;
     }
     if (step === 2 && !formData.willAttend) {
       toast.warning("Confirmation requise", {
         ...toastConfig,
-        description: "Veuillez indiquer si vous serez présent à l'événement"
+        description: "Veuillez indiquer si vous serez présent à l'événement",
+        icon: <XIcon size={16} />,
       });
       return;
     }
     setStep((prev) => prev + 1);
+    toast.success(`Passage à l'étape ${step + 1}`, {
+      ...toastConfig,
+      icon: <ChevronRightIcon size={16} />,
+    });
   };
 
   const handleBack = () => {
     setStep((prev) => prev - 1);
+    toast.info(`Retour à l'étape ${step - 1}`, {
+      ...toastConfig,
+      icon: <ChevronLeftIcon size={16} />,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
     try {
       if (!formData.name || !formData.email || !formData.willAttend) {
         throw new Error("Veuillez remplir tous les champs obligatoires");
       }
-
       const submissionData = {
         ...formData,
-        selected_activities: formData.selected_activities.join(', ')
+        selected_activities: formData.selected_activities.join(", "),
       };
-
-      const response = await fetch('https://backendjournee.vercel.app/api/inscriptions', {
-        method: 'POST',
+      const response = await fetch("https://backendjournee.vercel.app/api/inscriptions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(submissionData)
+        body: JSON.stringify(submissionData),
       });
-
       if (!response.ok) {
         throw new Error(`Erreur serveur (${response.status})`);
       }
-
       const data = await response.json();
-      
       if (data.success) {
         toast.success("Inscription confirmée", {
           ...toastConfig,
-          description: "Votre participation a bien été enregistrée. Un email de confirmation vous sera envoyé."
+          description: "Votre participation a bien été enregistrée. Un email de confirmation vous sera envoyé.",
+          icon: <CheckIcon size={16} />,
         });
-        
         setFormData({
           name: "",
           email: "",
@@ -151,6 +165,7 @@ export default function CulturalDayForm() {
           label: "Réessayer",
           onClick: () => handleSubmit(e),
         },
+        icon: <XIcon size={16} />,
       });
     } finally {
       setIsSubmitting(false);
@@ -159,6 +174,10 @@ export default function CulturalDayForm() {
 
   const scrollToForm = () => {
     document.getElementById("inscription-form")?.scrollIntoView({ behavior: "smooth" });
+    toast.info("Redirection vers le formulaire d'inscription", {
+      ...toastConfig,
+      icon: <ChevronDownIcon size={16} />,
+    });
   };
 
   const isActivitySelected = (activity) => {
@@ -167,71 +186,69 @@ export default function CulturalDayForm() {
 
   return (
     <div className="cultural-day-container">
-  {/* Header Section */}
-  <header className="header" style={{
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  zIndex: 1000,
-  backgroundColor: '#000052',
-  boxShadow: '0 4px 12px rgba(243, 237, 237, 0.96)',
-  padding: '1rem 0',
-  backdropFilter: 'blur(8px)',
-}}>
-  <div className="header-container" style={{
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '0 2rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '1rem',
-  }}>
-    {/* Logo à gauche */}
-    <motion.div 
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      style={{ flexShrink: 0 }}
-    >
-      <img 
-        src={sup}
-        alt="SUPEMIR Logo" 
-        style={{ 
-          height: 'clamp(40px, 5vw, 50px)',
-          width: 'auto',
-          filter: 'brightness(1.1) drop-shadow(0 0 2px rgba(255, 255, 255, 0.3))'
-        }}
-      />
-    </motion.div>
-
-    {/* Texte à droite avec text-shadow amélioré */}
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
-      style={{
-        color: 'white',
-        fontFamily: "'Arial', sans-serif",
-        fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
-        fontWeight: 600, // Évite fontWeight: 5000 (trop élevé, 600 suffit)
-        letterSpacing: '0.5px',
-        textAlign: 'right',
-        textShadow: `
-          0 0 10px rgba(129, 5, 5, 0.7), // Ombre blanche brillante
-          0 0 20px rgba(255, 215, 0, 0.4)    // Reflet doré subtil
-        `,
-        whiteSpace: 'nowrap',
-        padding: '0.2rem 0.5rem', // Ajoute un peu d'espace autour
-      }}
-    >
-      Empowering Your Future
-    </motion.div>
-  </div>
-</header>
-
+      {/* Header Section */}
+      <header className="header" style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        backgroundColor: '#000052',
+        boxShadow: '0 4px 12px rgba(243, 237, 237, 0.96)',
+        padding: '1rem 0',
+        backdropFilter: 'blur(8px)',
+      }}>
+        <div className="header-container" style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 2rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}>
+          {/* Logo à gauche */}
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            style={{ flexShrink: 0 }}
+          >
+            <img 
+              src={sup}
+              alt="SUPEMIR Logo" 
+              style={{ 
+                height: 'clamp(40px, 5vw, 50px)',
+                width: 'auto',
+                filter: 'brightness(1.1) drop-shadow(0 0 2px rgba(255, 255, 255, 0.3))'
+              }}
+            />
+          </motion.div>
+          {/* Texte à droite avec text-shadow amélioré */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            style={{
+              color: 'white',
+              fontFamily: "'Arial', sans-serif",
+              fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
+              fontWeight: 600,
+              letterSpacing: '0.5px',
+              textAlign: 'right',
+              textShadow: `
+                0 0 10px rgba(248, 111, 11, 0.7),
+                0 0 20px rgba(245, 110, 10, 0.4)
+              `,
+              whiteSpace: 'nowrap',
+              padding: '0.2rem 0.5rem',
+            }}
+          >
+            Empowering Your Future
+          </motion.div>
+        </div>
+      </header>
       {/* Hero Section */}
       <section className="hero-section">
         <motion.div 
@@ -269,7 +286,6 @@ export default function CulturalDayForm() {
             >
               Je souhaite participer
             </button>
-           
           </motion.div>
           <motion.div 
             initial={{ opacity: 0 }}
@@ -292,7 +308,6 @@ export default function CulturalDayForm() {
           </motion.div>
         </div>
       </section>
-
       {/* About Section */}
       <section id="about" className="about-section">
         <div className="about-container">
@@ -331,7 +346,6 @@ export default function CulturalDayForm() {
           </motion.div>
         </div>
       </section>
-
       {/* Activities Section */}
       <section id="activities" className="activities-section">
         <div className="activities-container">
@@ -494,7 +508,6 @@ export default function CulturalDayForm() {
           </div>
         </div>
       </section>
-
       {/* Form Section */}
       <section id="inscription-form" className="form-section">
         <div className="form-container">
@@ -508,7 +521,6 @@ export default function CulturalDayForm() {
             <h2 className="section-title">Formulaire d'Inscription</h2>
             <div className="section-divider"></div>
           </motion.div>
-          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -532,7 +544,6 @@ export default function CulturalDayForm() {
                     ></div>
                   </div>
                 </div>
-                
                 <form onSubmit={handleSubmit}>
                   {step === 1 && (
                     <motion.div
@@ -596,7 +607,6 @@ export default function CulturalDayForm() {
                       </div>
                     </motion.div>
                   )}
-                  
                   {step === 2 && (
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -684,7 +694,6 @@ export default function CulturalDayForm() {
                       </div>
                     </motion.div>
                   )}
-                  
                   {step === 3 && (
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -694,7 +703,6 @@ export default function CulturalDayForm() {
                     >
                       <div className="form-section-box">
                         <h3 className="form-section-title">Participation aux activités</h3>
-                        
                         {formData.selected_activities.length > 0 && (
                           <div className="selected-activities-feedback">
                             <span className="selected-count">
@@ -702,7 +710,6 @@ export default function CulturalDayForm() {
                             </span>
                           </div>
                         )}
-                        
                         <div className="activities-checkbox-grid">
                           <div className={`checkbox-card ${isActivitySelected("défilé") ? "selected" : ""}`}>
                             <div className="checkbox-container">
@@ -722,7 +729,6 @@ export default function CulturalDayForm() {
                               </label>
                             </div>
                           </div>
-                          
                           <div className={`checkbox-card ${isActivitySelected("présentation") ? "selected" : ""}`}>
                             <div className="checkbox-container">
                               <input
@@ -739,7 +745,6 @@ export default function CulturalDayForm() {
                               <label htmlFor="activity-presentation">Présentation par pays</label>
                             </div>
                           </div>
-                          
                           <div className={`checkbox-card ${isActivitySelected("danse") ? "selected" : ""}`}>
                             <div className="checkbox-container">
                               <input
@@ -756,7 +761,6 @@ export default function CulturalDayForm() {
                               <label htmlFor="activity-dance">Danses traditionnelles</label>
                             </div>
                           </div>
-                          
                           <div className={`checkbox-card ${isActivitySelected("cuisine") ? "selected" : ""}`}>
                             <div className="checkbox-container">
                               <input
@@ -773,7 +777,6 @@ export default function CulturalDayForm() {
                               <label htmlFor="activity-food">Stand culinaire</label>
                             </div>
                           </div>
-                          
                           <div className={`checkbox-card ${isActivitySelected("chant") ? "selected" : ""}`}>
                             <div className="checkbox-container">
                               <input
@@ -790,7 +793,6 @@ export default function CulturalDayForm() {
                               <label htmlFor="activity-singing">Chant</label>
                             </div>
                           </div>
-                          
                           <div className={`checkbox-card ${isActivitySelected("slam") ? "selected" : ""}`}>
                             <div className="checkbox-container">
                               <input
@@ -815,7 +817,6 @@ export default function CulturalDayForm() {
                   )}
                 </form>
               </div>
-              
               <div className="card-footer">
                 {step > 1 ? (
                   <button
@@ -829,7 +830,6 @@ export default function CulturalDayForm() {
                 ) : (
                   <div></div>
                 )}
-                
                 {step < 3 &&
                 !(step === 2 && formData.willAttend === "non") &&
                 !(step === 2 && formData.willParticipate === "non") ? (
@@ -857,7 +857,6 @@ export default function CulturalDayForm() {
           </motion.div>
         </div>
       </section>
-      
       <footer className="footer">
         <div className="footer-container">
           <motion.div 
